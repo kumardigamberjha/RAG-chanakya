@@ -1,7 +1,7 @@
 from langchain_community.vectorstores import Chroma
 from langchain_community.embeddings.sentence_transformer import SentenceTransformerEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_community.document_loaders import TextLoader, PyPDFLoader, PyPDFDirectoryLoader
+from langchain_community.document_loaders import TextLoader, PyPDFLoader, PyPDFDirectoryLoader, DirectoryLoader, BSHTMLLoader
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_ollama import ChatOllama
 from langchain_classic.chains import create_retrieval_chain, create_history_aware_retriever
@@ -18,8 +18,24 @@ def build_core_rag():
     # loader = PyPDFLoader("../inputs/chaaNakyaNiti.pdf")
 
     directory_path = "../inputs/"
-    loader = PyPDFDirectoryLoader(directory_path)
-    docs = loader.load()
+    
+    html_loader = DirectoryLoader(
+        directory_path, 
+        glob="**/*.html", 
+        loader_cls=BSHTMLLoader,
+        loader_kwargs={'bs_kwargs': {'features': 'html.parser'}}
+    )
+
+    pdf_loader = DirectoryLoader(
+        directory_path, 
+        glob="**/*.pdf", 
+        loader_cls=PyPDFLoader
+    )
+
+    html_docs = html_loader.load()
+    pdf_docs = pdf_loader.load()
+
+    docs = html_docs + pdf_docs
     splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
     chunks = splitter.split_documents(docs)
     print(f"[SYSTEM] Data split into {len(chunks)} chunks.")
