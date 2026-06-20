@@ -248,7 +248,7 @@ const ChatArea = ({ activeChat, onCreateChat, onRenameChatLocal, onMessageSent, 
       setMessages([])
     }
     fetchSuggestions()
-  }, [activeChat])
+  }, [activeChat?.id])
 
   const fetchSuggestions = async () => {
     try {
@@ -289,6 +289,7 @@ const ChatArea = ({ activeChat, onCreateChat, onRenameChatLocal, onMessageSent, 
   }
 
   const fetchHistory = async () => {
+    if (isSending || isStreaming) return
     try {
       const response = await api.get(`/chats/${activeChat.id}/history`)
       setMessages(response.data)
@@ -370,7 +371,9 @@ const ChatArea = ({ activeChat, onCreateChat, onRenameChatLocal, onMessageSent, 
                 setMessages(prev => {
                   const updated = [...prev]
                   const lastIdx = updated.length - 1
-                  updated[lastIdx] = { ...updated[lastIdx], content: accumulatedAnswer }
+                  if (lastIdx >= 0) {
+                    updated[lastIdx] = { ...updated[lastIdx], content: accumulatedAnswer }
+                  }
                   return updated
                 })
               }
@@ -379,7 +382,9 @@ const ChatArea = ({ activeChat, onCreateChat, onRenameChatLocal, onMessageSent, 
                 setMessages(prev => {
                   const updated = [...prev]
                   const lastIdx = updated.length - 1
-                  updated[lastIdx] = { ...updated[lastIdx], sources: data.sources }
+                  if (lastIdx >= 0) {
+                    updated[lastIdx] = { ...updated[lastIdx], sources: data.sources }
+                  }
                   return updated
                 })
               }
@@ -399,6 +404,7 @@ const ChatArea = ({ activeChat, onCreateChat, onRenameChatLocal, onMessageSent, 
     } catch (error) {
       console.error('Error sending message:', error)
       setMessages(prev => {
+        if (prev.length === 0) return prev
         const updated = [...prev]
         const lastIdx = updated.length - 1
         updated[lastIdx] = { ...updated[lastIdx], content: `Error: ${error.message}` }
@@ -444,7 +450,7 @@ const ChatArea = ({ activeChat, onCreateChat, onRenameChatLocal, onMessageSent, 
                 appearance: 'none',
               }}
             >
-              <option value="" style={{ background: '#0b0f19', color: 'var(--t1)' }}>Chanakya Neeti</option>
+              <option value="" style={{ background: '#0b0f19', color: 'var(--t1)' }}>Global Knowledge</option>
               {subjects.map(s => (
                 <option key={s.id} value={s.id} style={{ background: '#0b0f19', color: 'var(--t1)' }}>
                   {s.name}

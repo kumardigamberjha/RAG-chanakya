@@ -41,12 +41,14 @@ We architected a 100% offline, multi-tenant RAG pipeline leveraging FastAPI, Rea
 RAG/
 ├── app.py                  # Standalone Streamlit local UI prototype (Sanjaya RAG)
 ├── backend/                # FastAPI Backend Ecosystem
-│   ├── main.py             # FastAPI entry point & HTTP router
-│   ├── rag_backend.py      # LangChain RAG pipeline, Embedding & OCR logic
-│   ├── app_data/           # Persistent storage for tenant files & chat histories
+│   ├── main.py             # FastAPI entry point & API Routing
+│   ├── authentication/     # Security, JWT tokens, and RBAC logic
+│   ├── chat/               # LangChain RAG pipeline & chat routing
+│   ├── db/                 # SQLAlchemy ORM Models, SQLite DB & Migrations
+│   ├── sources/            # Document ingestion and management routes
+│   ├── subjects/           # Educational subjects routing
 │   ├── chroma_db/          # Persistent Chroma vector store
-│   ├── chats.json          # Global registry of active chat sessions
-│   └── tenants.json        # Global registry of tenant metadata and files
+│   └── .env                # Environment variables
 ├── frontend/               # Vite + React Frontend Architecture
 │   ├── src/                # React components and pages
 │   ├── package.json        # Node dependencies
@@ -62,9 +64,10 @@ RAG/
 ## File Structure (Core Components)
 
 ### Backend
-- **`main.py`**: The core API server. Handles CORS, route definitions, async streaming responses, tenant partitioning (`X-Tenant-ID`), and persists chat/tenant metadata.
-- **`rag_backend.py`**: The AI heart of the system. Configures the LangChain pipeline, document loaders, RecursiveCharacterTextSplitter, local HuggingFace embeddings, BGE Reranker, local Ollama LLM, and parallel PDF OCR ingestion.
-- **JSON Registries (`chats.json`, `tenants.json`)**: Lightweight persistent metadata tracking.
+- **`main.py`**: The core API server. Handles CORS, route definitions, async streaming responses, and includes modular routers.
+- **`chat/rag_backend.py`**: The AI heart of the system. Configures the LangChain pipeline, document loaders, RecursiveCharacterTextSplitter, local HuggingFace embeddings, BGE Reranker, local Ollama LLM, and parallel PDF OCR ingestion.
+- **`db/` Module**: Contains SQLAlchemy models, database initialization, and the persistent `chats.db` SQLite database. Replaces legacy JSON registries.
+- **`authentication/` Module**: Handles JWT-based authentication and Role-Based Access Control (RBAC).
 
 ### Frontend
 - **`src/`**: Contains the React application logic (App.jsx, components, API integration layer).
@@ -94,18 +97,18 @@ RAG/
 
 ## API Documentation (B2B Multi-Tenant)
 
-*Note: All API endpoints below require the `X-Tenant-ID` header to be passed.*
+*Note: All API endpoints below require standard Bearer token authentication via JWT.*
 
 ### 1. Teacher Portal (Knowledge Base)
-- `POST /api/tenant/upload`: Uploads a file (PDF/TXT) into the specific tenant's context. Triggers a background asynchronous task for OCR and ingestion.
-- `GET /api/tenant/files`: Returns a list of all files currently ingested into the tenant's vector space.
-- `DELETE /api/tenant/files/{filename}`: Physically deletes the file and purges its corresponding chunk vectors from ChromaDB.
+- `POST /api/admin/subjects`: Creates a new educational subject.
+- `POST /api/admin/sources`: Uploads and ingests PDF/TXT files into a specific subject. Triggers a background asynchronous task for OCR and ingestion.
+- `DELETE /api/admin/sources/{source_id}`: Physically deletes the file and purges its corresponding chunk vectors from ChromaDB.
 
 ### 2. Student Portal (Conversations)
-- `POST /api/chats`: Initializes a new chat session for the tenant.
-- `GET /api/chats`: Retrieves all chat sessions isolated to the tenant.
-- `PATCH /api/chats/{chat_id}`: Renames a specific chat session.
-- `DELETE /api/chats/{chat_id}`: Deletes a chat session and purges its JSON history.
+- `GET /api/subjects`: Retrieves all subjects available.
+- `POST /api/chats`: Initializes a new chat session.
+- `GET /api/chats`: Retrieves all chat sessions.
+- `DELETE /api/chats/{chat_id}`: Deletes a chat session and purges its history.
 - `GET /api/chats/{chat_id}/history`: Retrieves the full human/AI conversation history for UI rendering.
 - `POST /api/chats/{chat_id}/query`: Submits a user query. The backend processes the RAG chain and returns an asynchronous **Server-Sent Events (SSE)** stream of LLM tokens, concluding with a JSON payload of provenance/source citations.
 

@@ -1,20 +1,3 @@
-"""
-auth.py
-~~~~~~~
-JWT authentication layer for the Wings-of-AI backend.
-
-Provides:
-  - verify_password(plain, stored_hash)  – matches seed.py's SHA-256 scheme
-  - create_access_token(data)            – mints a signed JWT
-  - require_auth                         – FastAPI dependency: any valid token
-  - require_admin                        – FastAPI dependency: role == 'admin'
-
-JWT configuration (via .env / environment variables):
-  JWT_SECRET        – signing secret  (REQUIRED in production; has an insecure default)
-  JWT_ALGORITHM     – default HS256
-  JWT_EXPIRE_MINUTES – default 60
-"""
-
 import hashlib
 import os
 import sqlite3
@@ -22,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 import jwt
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Header
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 # ── Configuration ─────────────────────────────────────────────────────────────
@@ -39,6 +22,12 @@ _DB_PATH: str = os.environ.get(
 # HTTPBearer extracts "Authorization: Bearer <token>" automatically.
 # auto_error=False lets us return a 401 with a custom message instead of 403.
 _bearer = HTTPBearer(auto_error=False)
+
+def get_current_tenant(x_tenant_id: Optional[str] = Header(None)) -> str:
+    """Extracts tenant ID from headers."""
+    if not x_tenant_id:
+        raise HTTPException(status_code=400, detail="X-Tenant-ID header is missing")
+    return x_tenant_id
 
 
 # ── Password helpers ──────────────────────────────────────────────────────────

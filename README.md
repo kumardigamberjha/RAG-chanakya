@@ -39,11 +39,11 @@ The system has evolved into a robust architecture, supporting a production-ready
 RAG/
 ├── backend/                # FastAPI Backend Ecosystem
 │   ├── main.py             # FastAPI entry point & API Routing
-│   ├── rag_backend.py      # Core LangChain RAG pipeline & OCR logic
-│   ├── database.py         # SQLAlchemy ORM Models (Users, Subjects, Sources)
-│   ├── auth.py             # Security, Tokens, and RBAC logic
-│   ├── seed.py             # Database initialization and admin seeding
-│   ├── wings.db            # Persistent SQLite database
+│   ├── authentication/     # Security, Tokens, and RBAC logic (auth.py, router.py)
+│   ├── chat/               # LangChain RAG pipeline & chat routing (rag_backend.py, router.py)
+│   ├── db/                 # SQLAlchemy ORM Models, Migrations & Init (models.py, database.py, seed.py)
+│   ├── sources/            # Document ingestion and management routes
+│   ├── subjects/           # Educational subjects routing
 │   ├── chroma_db/          # Persistent Chroma vector store
 │   └── .env                # Environment variables (API Keys, URLs)
 ├── frontend/               # Vite + React Frontend
@@ -89,7 +89,7 @@ NVIDIA_API_KEY=your_nvidia_api_key_here
 Before running the backend, initialize the SQLite database and create the default admin user:
 ```bash
 cd backend
-python seed.py
+python db/seed.py
 ```
 
 ### 3. Frontend Setup
