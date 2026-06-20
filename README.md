@@ -1,54 +1,132 @@
-# Chanakya Neeti Local RAG
+# Wings of AI: Subject-Centric Educational RAG Platform
 
-This project is a deeply local, privacy-first Retrieval-Augmented Generation (RAG) system built to interact with "Chanakya Neeti" and other documents offline. It features a complete pipeline from ingesting PDF documents to creating a context-aware conversational AI, avoiding any external APIs to ensure your data stays fully on-device.
+This project is a deeply local, privacy-first Retrieval-Augmented Generation (RAG) system built to serve as an interactive, subject-specific educational platform. It features a complete pipeline from ingesting documents (like "Chanakya Neeti" or custom syllabus PDFs) to creating a context-aware conversational AI. 
+
+The system has evolved into a robust architecture, supporting a production-ready FastAPI + React ecosystem designed for educational environments, featuring role-based access control, subject-centric document retrieval, and interactive AI-driven quizzes.
 
 ## Key Features
 
-- **100% Offline Generation**: Powered by `ChatOllama` utilizing local models (like `mistral:latest`).
-- **Local Embeddings**: Uses `HuggingFaceEmbeddings` with the lightweight and capable `all-MiniLM-L6-v2` Sentence Transformer model.
-- **Persistent Vector Storage**: Integrates with `Chroma` for saving and querying vector embeddings offline without needing a standalone vector database server.
-- **History-Aware Conversations**: Implements LangChain's memory and history-aware retrievers to provide context-driven follow-ups during chat sessions.
-- **Bare-Metal Database Inspection**: Includes tools to bypass the LangChain wrapper, letting you directly query and inspect vectors and chroma collections.
+- **Subject-Centric RAG Architecture**: Documents are bound to specific subjects. The conversational AI filters context dynamically based on the active subject, preventing cross-contamination of knowledge between unrelated domains.
+- **Interactive Quiz Engine**: A dynamic "Generate Quiz" feature that bypasses standard semantic retrieval to randomly sample subject facts, prompting the LLM to stream a 5-question multiple-choice quiz directly into the chat session, complete with a hidden answer key.
+- **Relational Data & Persistent Vector Storage**: Uses SQLite for strict relational data mapping (Users, Roles, Subjects, Sources, Chat Histories) and integrates with ChromaDB for saving and querying vector embeddings with advanced metadata filtering (`subject_id`, `visibility`, etc.).
+- **Multiple LLM Integration**: Powered by `ChatOllama` for 100% offline generation using local models (e.g., `gemma_ollama`, `mistral_ollama`), while also seamlessly supporting NVIDIA's cloud APIs (e.g., `minimax_nvidia`) via environment variables.
+- **Local Embeddings & Reranking**: Uses `HuggingFaceEmbeddings` (`all-MiniLM-L6-v2`) for vectorization, supercharged by a **BGE GPU Reranker** (`BAAI/bge-reranker-base`) for precision context retrieval.
+- **Advanced Document Processing**: Built-in PDF processing using `pdf2image` and LLM-driven Vision OCR to extract text from complex or scanned documents asynchronously.
+- **Role-Based Access Control (RBAC)**: Secure FastAPI backend enforces strict authentication using `X-Auth-Token` headers. The system isolates Admin/Teacher routes for document ingestion while keeping Student/Public chat routes accessible.
 
-## Architecture & Scripts
+## Tech Stack
 
-The project is broken into distinct scripts, each modularizing a critical piece of the RAG puzzle.
+### AI & Machine Learning
+- **LangChain** (RAG Pipeline Orchestration)
+- **ChromaDB** (Vector Store with Metadata Filtering)
+- **Ollama / NVIDIA API** (LLM Execution)
+- **HuggingFace** (Embeddings & Cross-Encoder Reranking)
 
-### 1. Vector Database Builder (`Scripts/ingest.py`)
-This script focuses on processing raw text. It handles loading data, chunking using `RecursiveCharacterTextSplitter`, generation of embeddings, and ultimately persisting the `ChromaDB` into the `db/` folder. It serves as a testing ground for text ingestion.
+### Backend
+- **FastAPI** (Async Web API)
+- **SQLAlchemy & SQLite** (Relational Database ORM)
+- **Python 3.10+** (Core Logic)
+- **Uvicorn** (ASGI Server)
 
-### 2. Conversational RAG Engine (`Scripts/rag_script.py`)
-The main script for running your Chanakya Neeti offline chat interface. 
-- Automatically loads all PDFs from the `inputs/` directory.
-- Chunks and embeds the document contents.
-- Initiates the `ChatOllama` LLM and builds a sophisticated chain (`create_history_aware_retriever` + `create_stuff_documents_chain`) to answer queries interactively.
-- Run it to enter a continuous command-line terminal chat session capable of remembering previous turns contextually.
+### Frontend
+- **React 18 + Vite** (Production Web App)
+- **Framer Motion & Lucide React** (UI/UX)
+- **React Markdown** (Streaming chat rendering & collapsible custom blocks)
 
-### 3. Database Inspector (`Scripts/db_inspector.py`)
-A utility script designed for debugging and transparency. It strips away the LangChain abstraction to connect directly with the `Chroma` persistent client. You can view the hidden structures—internal IDs, multi-dimensional embedding values, and manually query the DB through math and distance algorithms outside the LLM context.
+## Architecture & File Structure
+
+```text
+RAG/
+├── backend/                # FastAPI Backend Ecosystem
+│   ├── main.py             # FastAPI entry point & API Routing
+│   ├── rag_backend.py      # Core LangChain RAG pipeline & OCR logic
+│   ├── database.py         # SQLAlchemy ORM Models (Users, Subjects, Sources)
+│   ├── auth.py             # Security, Tokens, and RBAC logic
+│   ├── seed.py             # Database initialization and admin seeding
+│   ├── wings.db            # Persistent SQLite database
+│   ├── chroma_db/          # Persistent Chroma vector store
+│   └── .env                # Environment variables (API Keys, URLs)
+├── frontend/               # Vite + React Frontend
+│   ├── src/                # React components and pages
+│   └── package.json        # Frontend dependencies
+├── inputs/                 # Default directory for local document processing
+└── README.md               # Project documentation
+```
 
 ## Prerequisites
 
-- [Ollama](https://ollama.com/) installed and running locally with the `mistral` model pulled (`ollama run mistral`).
-- Python 3.10+
-- The `inputs/` directory setup with the Chanakya Neeti PDF (e.g., `chaaNakyaNiti.pdf`) or any text you wish to engage with.
-- Required python packages (Install via `pip`):
-  - `langchain`
-  - `langchain-community`
-  - `langchain-huggingface`
-  - `langchain-ollama`
-  - `sentence-transformers`
-  - `chromadb`
-  - `pypdf`
+- **Ollama**: Installed and running locally. Pull the required models:
+  ```bash
+  ollama run gemma:2b # Or whatever your preferred local model is
+  ```
+- **NVIDIA API Key**: (Optional) For utilizing cloud models via LangChain NVIDIA integration.
+- **System Packages**: Required for PDF OCR.
+  ```bash
+  # Ubuntu/Debian
+  sudo apt install poppler-utils
+  # macOS
+  brew install poppler
+  ```
+- **Python**: Version 3.10 or higher.
+- **Node.js**: Version 18 or higher (for the React frontend).
+
+## Setup & Installation
+
+### 1. Python Environment Setup
+```bash
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+pip install -r requirements.txt  # Ensure dependencies match current architecture
+```
+
+Set up your `.env` file in the `backend` directory:
+```env
+OLLAMA_BASE_URL=http://localhost:11434
+NVIDIA_API_KEY=your_nvidia_api_key_here
+```
+
+### 2. Database Initialization
+Before running the backend, initialize the SQLite database and create the default admin user:
+```bash
+cd backend
+python seed.py
+```
+
+### 3. Frontend Setup
+```bash
+cd frontend
+npm install
+```
 
 ## How To Run
 
-1. **Place your source material:** Ensure your Pdfs (like `chaaNakyaNiti.pdf`) are inside the `inputs/` directory.
-2. **Launch the conversational Interface:** Navigate into the `Scripts` directory and run:
+1. **Start the Backend:**
+   ```bash
+   cd backend
+   python -m uvicorn main:app --reload --port 8000
+   ```
+   *The API will be available at `http://localhost:8000`. API Docs available at `http://localhost:8000/docs`.*
 
-```bash
-python rag_script.py
-```
-Type your questions to interact with Chanakya Neeti. Type `exit` or `quit` to end the session.
+2. **Start the Frontend:**
+   Open a new terminal window.
+   ```bash
+   cd frontend
+   npm run dev
+   ```
+   *The frontend will be available at `http://localhost:5173`.*
 
-3. **Inspect the Vectors (Optional):** Run `python db_inspector.py` to get a glance underneath the hood at how ChromaDB stored the embeddings.
+## Backend API Documentation (Overview)
+
+The FastAPI server (`backend/main.py`) exposes several endpoints grouped by role context. Administrative endpoints require an `X-Auth-Token` header.
+
+### Admin/Teacher Portal (Knowledge Base)
+- `POST /api/admin/subjects`: Create a new educational subject.
+- `POST /api/admin/sources`: Upload and ingest PDF/Text files into a specific subject. Ingestion runs asynchronously in the background.
+- `DELETE /api/admin/sources/{source_id}`: Remove a source file and automatically purge its vectors from ChromaDB.
+
+### Student Portal (Query & Chat)
+- `GET /api/subjects`: List all available subjects for the UI dropdown.
+- `GET /api/subjects/{subject_id}/sources`: List the documents backing a specific subject.
+- `POST /api/chats`: Create a new chat session.
+- `GET /api/chats/{chat_id}/history`: Load the chat history.
+- `POST /api/chats/{chat_id}/query`: Submit a query to the RAG system. Accepts an `is_quiz` flag to trigger the custom Quiz Generator. Returns a Server-Sent Events (SSE) stream for real-time typing effect.

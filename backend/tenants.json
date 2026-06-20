@@ -1,0 +1,28 @@
+{
+    "demo-tenant": {
+        "files": [
+            "Chanakya_in_Daily_Life.pdf",
+            "ChanakyaNitiShastraHinduOnline.pdf",
+            "monograph63.pdf",
+            "FinalSamvadsangrahah_Chapter_11.pdf",
+            "Kautilya's Arthashastra.pdf",
+            "monograph20.pdf",
+            "Arthashastra_textbook.pdf",
+            "R. Shamasastry-Kautilya's Arthashastra   (1915).pdf"
+        ]
+    },
+    "school-alpha-01": {
+        "files": [
+            "Kautilya's Arthashastra.pdf",
+            "monograph63.pdf",
+            "monograph20.pdf",
+            "Arthashastra_textbook.pdf",
+            "ebharati-pdf-1645701693Arthasastra-KangaleRP-Part-2-Baroda-1963.pdf"
+        ],
+        "suggestions": [
+            "Who is the translator of Kautilya's Arthashastra into English?",
+            "Which book in the table of contents focuses on 'The Removal of Thorns' and on what page does it begin?",
+            "How many total books are listed in the table of contents, and what is the title of the final book?"
+        ]
+    }
+}
