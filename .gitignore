@@ -1,3 +1,21 @@
-.venv
-__pycache__
-db 
+# Environments
+.venv/
+node_modules/
+.env
+
+# Cache
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+chroma_db/
+backend/chroma_db/
+backend/app_data/
+backend/chats.db
+
+# OS
+.DS_Store
